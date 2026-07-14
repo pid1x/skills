@@ -1,0 +1,7 @@
+{
+  "name": "pid1x-skills",
+  "version": "0.0.1",
+  "skills": [
+    "./skills/engineering/mutation-check"
+  ]
+}
