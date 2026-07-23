@@ -14,7 +14,7 @@ npx skills update mutation-check
 
 `mutation-check` mutation-tests **one change** — a branch, PR, ticket, or path — and reports the tests that let mutants survive. A green suite only proves the tests pass; mutation testing breaks the code on purpose and asks whether any test noticed.
 
-It detects the project's mutation tool on first run (Pest, Stryker, mutmut, cargo-mutants, PIT, mutant, …), caches the choice in a local `.mutation-check.json` (gitignored, per-project), and scopes every run to covered lines in the diff — never the whole repo.
+It detects the project's mutation tool on first run (Pest, Stryker, mutmut, cargo-mutants, PIT, mutant, …), caches the choice in a local `.mutation-check.json` (ignored via `.git/info/exclude` by default — never committed), and scopes every run to covered lines in the diff — never the whole repo. Branch scopes fetch `origin/<base>` first so the diff isn't against a stale local base.
 
 ## When to reach for it
 

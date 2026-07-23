@@ -10,7 +10,7 @@ A green suite proves nothing. Mutation testing **breaks the code on purpose** an
 Mutate only what the change touched. That is what makes this fast enough to run per PR. Resolve the target → its changed files:
 
 - **Path / glob** → use as-is.
-- **Branch** (or no argument) → `git diff --name-only $(git merge-base <base> HEAD)...HEAD` (`base` = `main`/`master`).
+- **Branch** (or no argument) → `git fetch origin <base>`, then `git diff --name-only origin/<base>...HEAD` (`base` = `main`/`master`; `...` diffs from the merge-base, and the fetch avoids comparing against a stale local base).
 - **PR** (url or number) → `gh pr diff <pr> --name-only`; check out its head first if not local.
 - **Ticket key** (e.g. `ABC-123`) → resolve its PR (`gh pr list --search "<KEY> in:title"`), then treat as a PR.
 
@@ -19,7 +19,7 @@ Keep source files only — drop tests, config, generated code. Mutate **those fi
 **Done when:** every changed source file is listed; every dropped path has a one-line reason (test, config, or generated).
 
 ## 2. Detect the tool — once per project, then remember
-`.mutation-check.json` is a **local per-project cache** — not committed. First run in a repo: no file exists → detect, write it, and add `.mutation-check.json` to `.gitignore` if missing. Later runs in the same repo read it and skip detection. `--reconfigure` redoes detection.
+`.mutation-check.json` is a **local per-project cache** — not committed, and it **must be ignored by git**. First run in a repo: no file exists → detect, write it, and ensure git ignores it — if `git check-ignore .mutation-check.json` fails, add it to `.git/info/exclude` (local-only, never touches tracked files); only edit the repo's `.gitignore` if the user asks. Later runs in the same repo read it and skip detection. `--reconfigure` redoes detection.
 
 Read the manifest, confirm the binary is installed, pick the tool:
 
@@ -38,7 +38,7 @@ Schema — tool, the scoped-run command template (`<paths>` substituted at runti
 { "tool": "pest", "command": "pest --mutate --covered-only <paths>", "detectedFrom": "composer.json" }
 ```
 
-**Done when:** the tool binary is verified (`--version` or equivalent); `.mutation-check.json` is written or read; and `.gitignore` contains `.mutation-check.json` (added on first write if missing).
+**Done when:** the tool binary is verified (`--version` or equivalent); `.mutation-check.json` is written or read; and `git check-ignore .mutation-check.json` passes (via existing ignore rules or `.git/info/exclude`, added on first write if missing).
 
 ## 3. Run — covered, scoped, parallel
 Run the detected tool on the scoped paths. Always: **covered code only** (an untested line's mutant is noise, not signal), **parallel** if supported.
