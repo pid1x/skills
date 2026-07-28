@@ -26,7 +26,11 @@ _(none yet)_
 
 #### Model-invoked
 
+- **[deep-review](./skills/engineering/deep-review/SKILL.md)** — Orchestrate a full PR review (engine + spec/security/mutation/verify lenses) into one loop-style write-up; dry-run by default, opt-in `post` writes a comment-only review to the PR.
 - **[mutation-check](./skills/engineering/mutation-check/SKILL.md)** — Mutation-test a change and report the tests that let mutants survive.
+- **[verify-live](./skills/engineering/verify-live/SKILL.md)** — Runtime-verify a change by driving the real flow against the running app; reports one evidence-gated status.
+- **[spec-check](./skills/engineering/spec-check/SKILL.md)** — Check a change against the spec it was meant to satisfy; severity judged independently of the author's framing.
+- **[security-check](./skills/engineering/security-check/SKILL.md)** — Security-review a change against a vuln-class taxonomy, tracing tainted input from entry point to sink; reachability sets severity.
 
 ### Productivity
 
