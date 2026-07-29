@@ -65,8 +65,7 @@ Reads and writes are separate permissions. A run can often **read** the queue wh
 it must be visible rather than silent:
 
 - **Denials are per-call — retry once, later.** A refusal is not necessarily a standing permission state:
-  the same call can be blocked early in a pass and succeed minutes later (observed 2026-07-29 — both tracker
-  aliases were refused at the start and the identical calls went through afterwards). So on a denial, carry
+  the same call can be blocked early in a pass and succeed minutes later. So on a denial, carry
   on and **re-attempt that write once, later in the pass** (e.g. at the marking step). Only if the retry is
   refused too do you declare degraded mode. **Never work around a denial** — no direct API call with a
   personal token, no alternate credential. A refused permission is an answer; a retry is not a workaround.
