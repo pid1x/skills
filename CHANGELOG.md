@@ -19,6 +19,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 ### Added
 
 - `engineering/review-queue` — the workflow half around `deep-review`: drive a review queue unattended (oldest ticket first, **one per pass**, the cadence drains the backlog), resolve its PR, claim an isolated environment, hand the review over, mark, report and hand the environment back. Two rules make unattended runs safe: the static review is **posted before** the slow runtime lenses start, and the runtime follow-up comment is the completion marker, so a truncated pass is resumed rather than redone (the ticket is only marked once both halves landed). No isolated environment → the pass defers instead of posting a runtime-less review that looks complete; `isolation.strategy: none` still runs the static lenses and labels the review `⚠️ static-only`. A refused tracker write is retried once, then degrades visibly — the review still ships and the brief names every skipped write and its consequence, and a denial is never routed around with another credential. All instance-specific values live in a git-ignored `.review-queue.json`, so the skill body is identical across repos; isolation defaults to [wts](https://github.com/pid1x/wts) with `fixed-worktree` / `fresh-clone` / `none` as alternatives
+- `docs/engineering/review-queue.md`
 
 - `engineering/verify-live` — runtime-verify a change by driving the real flow against the running app; reports one evidence-gated status (`confirmed ✓` / `diverged` / `not verified`), never the test suite
 - `docs/engineering/verify-live.md`
