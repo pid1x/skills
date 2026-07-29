@@ -26,6 +26,7 @@ _(none yet)_
 
 #### Model-invoked
 
+- **[review-queue](./skills/engineering/review-queue/SKILL.md)** — Drive a review queue unattended: pick the oldest ticket awaiting review, claim an isolated environment, hand the review to `deep-review`, mark, report, hand the environment back. One ticket per pass; dry-run by default.
 - **[deep-review](./skills/engineering/deep-review/SKILL.md)** — Orchestrate a full PR review (engine + spec/security/mutation/verify lenses) into one loop-style write-up; dry-run by default, opt-in `post` writes a comment-only review to the PR.
 - **[mutation-check](./skills/engineering/mutation-check/SKILL.md)** — Mutation-test a change and report the tests that let mutants survive.
 - **[verify-live](./skills/engineering/verify-live/SKILL.md)** — Runtime-verify a change by driving the real flow against the running app; reports one evidence-gated status.

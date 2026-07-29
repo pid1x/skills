@@ -6,6 +6,7 @@
     "./skills/engineering/verify-live",
     "./skills/engineering/spec-check",
     "./skills/engineering/security-check",
-    "./skills/engineering/deep-review"
+    "./skills/engineering/deep-review",
+    "./skills/engineering/review-queue"
   ]
 }

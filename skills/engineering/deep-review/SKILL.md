@@ -54,12 +54,50 @@ Write the review in the shape a PR already expects, so it reads the same whoever
 - **Prior findings** (delta re-review only) — per prior finding, `addressed ✓` / `still open`; never re-raise a resolved thread.
 - **Engine review** — the general findings, numbered.
 - **[security]** and **[spec]** — folded in with their inline tags and bottom-lines.
+- **`## Asks` — last, and never omitted** (see below).
 
-**Runtime follow-up comment** — `[mutation]` and `[verify]` with their proof blocks (they finish later than the static pass, so they can't fold into the main comment).
+**Runtime follow-up comment** — `[mutation]` and `[verify]` with their proof blocks (they finish later than the static pass, so they can't fold into the main comment). It ends in its own short `Asks` block whenever a runtime lens produced one.
 
 Each lens keeps its `[lens]` bottom-line. If [verify] couldn't run, the `⚠️ static-only — not runtime-verified` header rides on the main comment.
 
-**Done when:** the write-up carries both comments in loop shape; every lens's bottom-line is present; the `My read` verdict leads the main comment.
+### End on the asks, not on a tally
+A review that never approves and never blocks has exactly one lever: **how clearly it asks.** Findings are
+diagnoses; an author needs the translation into work. So **every finding carries its ask on one line**
+(`→ ask: <verb the author can act on>`), and the comment **closes with a consolidated `## Asks` block** —
+grouped, ordered, each item naming a **verb** and, where it isn't the author, an **owner**:
+
+- **Must** — correctness, data integrity, security with a reachable path. Name the file:line to change.
+- **Should** — worth doing now, not release-blocking (a test that doesn't actually pin the bug, a misleading message).
+- **Decide** — *not* a code change: a judgement only a human can make. Say who and what: confirm a requirement counts as closed, accept-or-split disclosed scope creep, file the follow-up ticket that nothing currently links.
+- **FYI** — deliberately no action (unreachable sinks, pre-existing patterns), so the author knows they may skip it.
+
+Empty groups are dropped; an all-clear review says `## Asks — none` rather than nothing. **Never close on a
+count** (`1 finding · 2 informational`) — a statistic is the worst possible last line, because it leaves the
+reader to derive the work. The lens bottom-lines stay where they are, inside their sections.
+
+### Keep it short enough to be read
+Length is not thoroughness. A wall of text gets skimmed, and a skimmed review changes nothing — so the
+budget is part of the format, not a nicety. Measured caps for the **main comment**:
+
+| | Budget |
+|---|---|
+| Whole main comment | **≈3,500 characters** — if it is longer, cut, don't append |
+| One finding | **3 sentences / ≈400 characters**: the claim · the evidence (`file:line`) · the consequence |
+| An `FYI` / informational item | **one line** |
+| The `Asks` block | one line per ask |
+
+What to cut first, in order — all of it is process, not finding:
+- **How you found it.** The `file:line` *is* the evidence; the trace that led there is not. Never narrate
+  the investigation ("I then checked X, which showed Y, so I looked at Z").
+- **Restating the author's own words.** Do not quote the PR description or re-explain the ticket back to
+  them — they wrote it. Quote a spec line only where the divergence turns on its exact wording.
+- **Re-deriving what the change obviously does.** Findings are about what is *wrong or missing*.
+- **Confirmations.** "I verified claim X holds" belongs in one clause of the verdict, not its own paragraph.
+
+_(Reference point: an early live review ran 8,482 characters, 46 % of it in the engine section with single
+findings up to 1,383 — roughly 200 words for one point. Same findings, a third of the text.)_
+
+**Done when:** the write-up carries both comments in loop shape; every lens's bottom-line is present; the `My read` verdict leads the main comment; **every finding has a one-line ask, and the comment ends with the `## Asks` block** (or `## Asks — none`).
 
 ## 6. Deliver — dry-run by default, `post` writes to the PR
 **Dry-run (default, no `post` argument):** report the composed write-up into the chat, PR-ready. Nothing is sent. This is the safe default — posting is outward-facing and hard to undo.
