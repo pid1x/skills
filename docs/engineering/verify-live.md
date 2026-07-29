@@ -14,7 +14,7 @@ npx skills update verify-live
 
 `verify-live` runtime-verifies **one change** — a branch, PR, ticket, or path — by driving the flow the change affects against the **running app** and observing what actually happens. A green test suite proves the tests pass; `verify-live` proves the feature works.
 
-It reports exactly one evidence-gated status: `confirmed ✓` (with a proof block), `diverged — <url>`, or `not verified — <why>`. On first run it detects how to reach the app and caches it in a local `.verify-live.json` (ignored via `.git/info/exclude` by default — never committed).
+It reports exactly one evidence-gated status: `confirmed ✓` (with a proof block), `diverged — <url>`, or `not verified — <why>`. On first run it detects how to reach the app and caches it in a local `.verify-live.json` (ignored via `.git/info/exclude` by default — never committed). That cache holds only **pointers** to credentials — an env var name, a secret-manager key, a login route — never a secret itself: it is a convenience cache, not a credential store.
 
 ## When to reach for it
 

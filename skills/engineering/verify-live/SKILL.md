@@ -26,12 +26,12 @@ Name the **flow(s)** the change affects — the endpoint, route, screen, or job 
 Detect and record how to reach the app:
 
 ```json
-{ "baseUrl": "http://localhost:3000", "start": "<dev-server command>", "auth": "<how to authenticate>" }
+{ "baseUrl": "http://localhost:3000", "start": "<dev-server command>", "auth": "<pointer to creds: env var name / secret-manager key / login route — never the secret>" }
 ```
 
 - **`baseUrl`** — a running-app hostname (recognisable dev server, `.test` host, container port).
 - **`start`** — the command that brings it up, if it is not already running.
-- **`auth`** — how a request authenticates (login creds path, token, session).
+- **`auth`** — a **pointer** to how a request authenticates: the env var name, the secret-manager key, or the login route plus which local dev account to use. **Never the secret itself** — no tokens, passwords, cookies or PATs in this file. It is a convenience cache, not a credential store; it sits untracked on disk, so a leaked cache would be a leaked credential. If a drive needs a real secret, read it from the environment at run time.
 
 If the app **cannot be made to run** — no dev server, no runnable target — the drive cannot happen. That is not a skip and not a `confirmed`: report `not verified — app not runnable` and mark the review with a **`⚠️ static-only — not runtime-verified`** header, so no reader mistakes a static pass for a runtime one.
 

@@ -32,7 +32,7 @@ Reach for it when you want the whole review in one pass rather than running the 
 - All five lenses run or degrade honestly, each with an explicit status; capability is detected first and cached in a git-ignored `.deep-review.json`.
 - Cross-lens links are surfaced — a runtime lens confirming or contradicting a static finding makes the report stronger, not just longer.
 - The write-up reads in loop shape: a main comment (verdict, engine review, folded [spec]/[security]) plus a runtime follow-up (mutation/verify with proof blocks), each lens keeping its tagged bottom-line.
-- It never writes source files, never approves or blocks a merge, and rides a `⚠️ static-only` header whenever the app couldn't be driven.
+- It never writes source files — the one sanctioned exception is `mutation-check`'s hand-applied pass, whose edits are transient and unconditionally reverted — never approves or blocks a merge, and rides a `⚠️ static-only` header whenever the app couldn't be driven.
 - By default it posts nothing (dry-run); with `post` it writes a COMMENT-type review plus a runtime follow-up comment, confirms the target PR before sending, passes the body by file (never inline, so a large markdown body can't post as an empty `~`), and re-reads the post to confirm a non-empty body landed.
 - On a delta re-review it re-posts when there are new commits or its verdict changed (a stale-verdict correction), and carries a lens result forward only when the head SHA is byte-identical — a moved SHA, even a merge, re-runs the runtime lenses.
 - Its posts are headed `🤖 deep-review` — a distinct engine tag, so its dedupe matches only its own prior posts and never "corrects" another review engine's post on the same PR.

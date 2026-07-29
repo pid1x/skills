@@ -22,7 +22,7 @@ Capability map, cached in `.deep-review.json` (git-ignored like the lenses' own 
 **Done when:** the changed files are listed; each of the five lenses is marked runnable or degraded-with-reason; `.deep-review.json` is written or read and `git check-ignore` passes.
 
 ## 2. Checkout policy — never write source
-The conservative rule the lenses share: **dirty tree** → review from the diff, don't check out; **clean tree** → check out the PR head, restore the original branch afterwards. A review **never writes source files**. Runtime lenses ([mutation]/[verify]) need the app stood up; static lenses (engine/[spec]/[security]) don't.
+The conservative rule the lenses share: **dirty tree** → review from the diff, don't check out; **clean tree** → check out the PR head, restore the original branch afterwards. A review **never writes source files** — with exactly one sanctioned exception: `mutation-check`'s hand-applied fallback makes **transient** edits to already-checked-out source, each reverted unconditionally (including when its watchdog aborts mid-mutant) with the tree verified clean afterwards; see that skill's revert guarantee. Nothing else writes source. Runtime lenses ([mutation]/[verify]) need the app stood up; static lenses (engine/[spec]/[security]) don't.
 
 **Done when:** the change is present to review (checked-out head or working diff), and the runtime lenses have a stood-up app or a recorded reason they don't.
 
