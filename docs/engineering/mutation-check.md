@@ -29,8 +29,11 @@ The leading idea is **scoped mutation**: only files the change touched, only lin
 ## It's working if
 
 - It mutates only the diff's source files, not the whole codebase.
-- It runs on covered code only and, if the budget is blown, reports partial results with an explicit `skipped — time budget` line (10 min in PR/review context, 30 min standalone).
-- The report ranks survivors by blast radius and names the single test worth writing first.
+- It runs on covered code only and ends on exactly one of three outcomes — `score N% · M survivors` / `no covered tests in diff` / `no result — <reason>`. A run that hangs is aborted by a watchdog (10 min in PR/review context, 30 min standalone) and reported as `no result — baseline timed out`, never dressed up as `partial`.
+- When the tool can't target the changed code (legacy classes, string-literal predicates) or returns a hollow artifact score (single-mutant `100%`, all-timeout), it falls back to a hand-applied pass — apply each high-value mutant, run the covering test, revert — tagged `(hand-applied)`, or reports `no result` if the covering tests are too heavy to re-run within budget. A hollow artifact is never reported as a real score.
+- The hand-applied pass is the **only** place a review touches source, and the revert is guaranteed rather than best-effort: it also runs when the watchdog aborts mid-mutant, when a test errors, or when the run is interrupted, and the tree is verified clean before reporting — a revert that fails is named at the top of the report. It refuses to hand-apply on a dirty tree (`no result — dirty tree`), where its own edit couldn't be told from the user's.
+- The report ranks survivors by blast radius, excludes provably-equivalent mutants, and names the single test worth writing first.
+- Every run ends on a single tagged `[mutation]` bottom-line, so its verdict folds into a fuller review without re-reading the report.
 
 ## Where it fits
 
