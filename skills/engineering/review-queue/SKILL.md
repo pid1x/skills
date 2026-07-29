@@ -12,6 +12,30 @@ It is built for **unattended** runs (a scheduled task, several times a day). Two
 **one ticket per pass** — the cadence, not a batch loop, drains the queue — and **deliver before you
 finish**, so a pass that dies partway still shipped something useful and the next pass can resume it.
 
+## 0a. DRY-RUN unless the argument is `live` — the gate over every write
+**Without the `live` argument nothing leaves this machine.** Dry-run is the default because the writes are
+outward-facing and hard to undo: a review on someone else's PR cannot be unseen.
+
+There are exactly **five** writes, and **every one of them is LIVE-only**. In dry-run, do the *work* — poll,
+resolve, claim, stand up, run the lenses, compose — then **report what you would have written** and stop:
+
+| Step | Write | Dry-run instead |
+|---|---|---|
+| §1 | remove stale marker labels | list the tickets whose marker *would* be reset |
+| §3 | re-add a lost marker (self-heal) | name it |
+| §4 | assign the ticket | say who it *would* be assigned to |
+| §6 | **`deep-review` with `post`** — the review on the PR | invoke `deep-review` **without** `post`: it composes and reports, posts nothing |
+| §7 | add the marker label · send the brief | print the brief, prefixed `[DRY-RUN]` |
+
+**LITMUS: in dry-run, `deep-review` must never receive `post`.** That single argument is the difference
+between a rehearsal and a review on a stranger's pull request.
+
+Everything else — reading the queue, claiming an environment, standing it up, running all five lenses — is
+identical in both modes. That is the point: a dry-run rehearses the real pass, it does not simulate it.
+
+**Done when:** the mode is established from the argument, and if it is dry-run, every step below treats its
+write as a *report*.
+
 ## 0. Read the configuration
 All instance-specific values live in **`.review-queue.json`** at the repo root, so this skill stays
 identical across repos. Missing file → say what is needed and stop; never guess a queue query.
@@ -25,9 +49,11 @@ identical across repos. Missing file → say what is needed and stop; never gues
   "marker": { "label": "agent-reviewed", "header": "🤖 deep-review" },
   "notify": { "via": "slack-dm", "target": "@me" },
   "vcsIdentity": "your-gh-login",
-  "isolation": { "strategy": "wts", "prefer": "review", "parkingBranch": "<name>-main" },
+  "isolation": { "strategy": "wts", "tool": "path to wts (vendored copy, or just `wts` on PATH)", "prefer": "review", "parkingBranch": "<name>-main" },
   "env": { "baseUrl": "https://<worktree>.test", "repair": ["project-specific recovery steps"], "generatedArtifacts": ["paths a real flow may regenerate — revertable on restore"] },
-  "envMutation": { "authorized": ["feature flags", "provisioning rows", "migrations", "deps"], "forbidden": ["credentials", "shared config"] }
+  "envMutation": { "authorized": ["feature flags", "provisioning rows", "migrations", "deps"], "forbidden": ["credentials", "shared config"] },
+  "reviewRules": ["repo review-convention files to pass to the engine lens, e.g. .github/instructions/*.instructions.md"],
+  "workHours": "when an unattended pass may run, e.g. weekdays 08:00-18:00 Europe/Berlin"
 }
 ```
 
@@ -62,11 +88,16 @@ The marker label means exactly: *in a review status **and** assigned to the revi
 reviewed.* **Reset it the moment any of those breaks** — a status transition **or** a re-assignment:
 
 ```
-labels = "<marker.label>" AND (status not in (<reviewStatuses>) OR assignee != currentUser() OR assignee IS EMPTY)
+labels = "<marker.label>" AND (status not in (<reviewStatuses>) OR assignee != <assignTo> OR assignee IS EMPTY)
 ```
 
-Remove the label from every match (targeted remove — never overwrite the label list). A ticket handed back
+**(LIVE only — in dry-run, list the tickets instead.)** Remove the label from every match (targeted remove — never overwrite the label list). A ticket handed back
 to a developer went back for rework, so the marker must clear and let it re-enter the queue cleanly.
+
+**Compare against `assignTo`, not the querying account.** They are often different (a routine may run under one
+identity and assign to another); using the runner's identity here makes §1 strip the very label §4 just set —
+label churn on every pass. The condition above is the *semantics*; the JQL is one tracker's spelling of it —
+express it in whatever query language `tracker` uses.
 
 **Done when:** no ticket outside the review statuses (or off the reviewer's name) still carries the marker — or, if the remove was refused, the affected keys are recorded for the brief (see *When the tracker refuses writes*). A marker that cannot be cleared keeps that ticket **out of the queue**, so it must be named, not shrugged off.
 
@@ -85,7 +116,7 @@ Walk oldest-first. **Never batch.** Per candidate:
   - **No PR at all** → notify **once per day** (a review-status ticket without a PR is a real anomaly, but
     one reminder is enough) → next candidate.
 - **Dedupe:** a prior review whose body carries `marker.header` exists **and no new commits since it** →
-  **skip**; if the ticket lost its marker, re-add it so it stops re-entering the walk. **New commits since
+  **skip**; if the ticket lost its marker, re-add it so it stops re-entering the walk **(LIVE only)**. **New commits since
   it → not a skip:** the change came back for another look, so `deep-review` handles it as a delta.
 - An existing **approval or plain human review NEVER skips** — this workflow's lenses (spec, security,
   mutation, runtime verification) surface findings a plain review does not contain.
@@ -107,7 +138,7 @@ reviewer's own workspace.
 (`⛔ review deferred — <TICKET> waiting, no environment free`). The next pass **auto-resumes** when one
 frees; no manual signal. **No environment = no full review, and a half-baked review is worse than none.**
 
-Then take ownership: unassigned → assign to `assignTo`; already theirs → leave it. Assignment refused → carry on and note it (see *When the tracker refuses writes*); ownership is bookkeeping, not a precondition for reviewing.
+Then take ownership **(LIVE only — dry-run says who it would go to)**: unassigned → assign to `assignTo`; already theirs → leave it. Assignment refused → carry on and note it (see *When the tracker refuses writes*); ownership is bookkeeping, not a precondition for reviewing.
 
 **Done when:** an isolated environment is claimed (or the pass stopped and said why) and the ticket is owned.
 
@@ -130,7 +161,7 @@ complete a lens. Pass this along, and list every mutation performed in the brief
 **Done when:** the app answers at `baseUrl` on the PR head, or the repair steps are exhausted and that is stated.
 
 ## 6. Hand the review to deep-review — in two stages
-Invoke `deep-review` with the PR and `post`. Give it: the head is already checked out and the app is up
+Invoke `deep-review` with the PR — **and `post` ONLY in live mode.** In dry-run invoke it *without* `post`, so it composes the write-up and reports it without touching the PR (see §0a). Give it: the head is already checked out and the app is up
 (**you** own checkout and restore), the originating ticket key, the standing env-mutation authorization,
 and any repo review rules it should apply (e.g. matching `.github/instructions/*.instructions.md`, which a
 generic engine would otherwise miss).
@@ -150,10 +181,10 @@ version and reporting it as the lens.
 **Done when:** the main review is posted and either the runtime follow-up is posted or its absence is stated.
 
 ## 7. Mark, report, restore
-- **Mark** — add `marker.label` **only after stage 2 landed** (refused → say so in the brief with the key, and expect the ticket back next pass; the header-dedupe keeps it from being reviewed twice). A static-only pass stays unmarked so the next
+- **Mark** *(LIVE only)* — add `marker.label` **only after stage 2 landed** (refused → say so in the brief with the key, and expect the ticket back next pass; the header-dedupe keeps it from being reviewed twice). A static-only pass stays unmarked so the next
   pass resumes it: a prior review **without** a runtime follow-up counts as **incomplete** → run only the
   runtime stage, do not redo the static one. The PR itself is the journal; no extra state.
-- **Report** — notify via `notify`, folding `deep-review`'s verdict and each lens bottom-line verbatim, plus
+- **Report** — notify via `notify` (in dry-run, print the brief prefixed `[DRY-RUN]` instead of sending it), folding `deep-review`'s verdict and each lens bottom-line verbatim, plus
   the diff size, the PR link and any environment mutations performed.
 - **Restore — always, even after a failure.** Dirty tree (unexpected: a review must not write source) →
   **discard nothing**, report the file list, leave it.

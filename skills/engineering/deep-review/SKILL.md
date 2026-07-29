@@ -81,7 +81,7 @@ budget is part of the format, not a nicety. Measured caps for the **main comment
 
 | | Budget |
 |---|---|
-| Whole main comment | **≈3.500 characters** — if it is longer, cut, don't append |
+| Whole main comment | **≈3,500 characters** — if it is longer, cut, don't append |
 | One finding | **3 sentences / ≈400 characters**: the claim · the evidence (`file:line`) · the consequence |
 | An `FYI` / informational item | **one line** |
 | The `Asks` block | one line per ask |
@@ -94,8 +94,8 @@ What to cut first, in order — all of it is process, not finding:
 - **Re-deriving what the change obviously does.** Findings are about what is *wrong or missing*.
 - **Confirmations.** "I verified claim X holds" belongs in one clause of the verdict, not its own paragraph.
 
-_(Reference point: an early live review ran 8.482 characters, 46 % of it in the engine section with single
-findings up to 1.383 — roughly 200 words for one point. Same findings, a third of the text.)_
+_(Reference point: an early live review ran 8,482 characters, 46 % of it in the engine section with single
+findings up to 1,383 — roughly 200 words for one point. Same findings, a third of the text.)_
 
 **Done when:** the write-up carries both comments in loop shape; every lens's bottom-line is present; the `My read` verdict leads the main comment; **every finding has a one-line ask, and the comment ends with the `## Asks` block** (or `## Asks — none`).
 
