@@ -74,31 +74,40 @@ The OK need not be a live prompt: a **standing, scoped authorization from the ca
 **Done when:** the affected flow was exercised against the running app, the **change's own code path was confirmed reached** (not routed around by an off flag / gate / missing provisioning), and its real response / output / persisted state was observed and captured — or the drive failed and step 5 reports the honest negative.
 
 ## 5. Gate the claim on evidence
-The claim you post is decided by the evidence you hold, not by how the run felt. **Exactly three wordings are allowed:**
+The wording is decided by the evidence you hold, not by how the run felt. **Match your evidence to a row —
+no wording exists outside this table:**
 
-- **`confirmed ✓`** — the flow behaves as the change intends. Postable **ONLY** with a **proof block from THIS run**: the exact live URL(s) driven, the driver used (browser automation / authenticated HTTP client), and the observed artifact (response snippet, screenshot, or record read back after the action).
-- **`diverged — <url>`** — the flow ran but behaved wrong. Name the live URL and what you saw versus expected.
-- **`not verified — <why + what was tried>`** — the flow could not be driven. Name the blocker **as observed** — the command or drive you ran and what it returned. A blocker you inferred, assumed or recalled is not a blocker yet.
+| Evidence you actually hold | Wording |
+|---|---|
+| Live URL driven · the change's **own** path provably ran · observed artifact (response, screenshot, record read back) | `confirmed ✓` |
+| Flow ran, behaved wrong | `diverged — <url>` |
+| Flow ran but took the **old** path — off flag, config gate, missing provisioning | `not verified — <fix's path gated off>` |
+| Not driven; blocker **observed** — the command you ran and what it returned | `not verified — <blocker>` |
+| Not driven; blocker only inferred, recalled, or never actually attempted | `not verified — drive not completed (<what was tried>)` |
 
-**LITMUS: if the evidence contains no running-app hostname, it was not verify — it cannot be `confirmed`.** PHPUnit/Pest/Jest output is never verify evidence.
+**NEVER UPGRADE A ROW.** Audit the claim against its evidence before posting and take the weaker true row
+wherever evidence is missing. An overstated ✓ is a false green light on a real change — but `not verified` is
+**not a free pass** either: a fabricated blocker is equally a false claim, and it does extra damage by burying a
+change that was verifiable. Downgrade the **verdict** when evidence is thin, never the **rigour of the reason**.
 
-**SECOND LITMUS: if the change's own code path did not execute, it was not verified.** A flow that ran the **old** path — because the fix sits behind an off feature flag, a config gate, or missing provisioning — is `not verified — <the fix's path is gated off>`, never `confirmed`. Driving the flow is necessary but not sufficient; the change's path must have actually run.
+**Three guards the table cannot carry:**
 
-**THIRD LITMUS: a `not verified` reason is a published claim about the environment — gate it like one.** It is the only wording with no URL behind it, which makes it the easy sink for a drive that got hard, and the reader acts on it as fact about their own setup. Before posting one, all three must hold:
+1. **Test-runner output is never evidence.** No running-app hostname → no `confirmed`, ever. Integration tests
+   through the framework's HTTP kernel never touched the running app.
+2. **A blocker the standing OK (§4) or an auth route (§3) already covers is a STEP, not a blocker** — seeding
+   provisioning or fixtures, flipping the PR's own flag, migrations. Over-classifying an authorized step as
+   out-of-scope is the most common way this lens quits early on a change it could have verified.
+3. **A recalled mechanism is a hypothesis.** Confirm it in the tree in front of you or do not name it — a
+   confidently-named gate that does not exist is a false claim on someone else's PR, and a negative verdict
+   does not make it safe.
 
-1. **Observe the blocker, never recall it.** Name the command you ran and what it returned. A mechanism remembered from another branch, another instance or an earlier session is a *hypothesis* — confirm it in the tree in front of you or do not name it. A confidently-named gate that does not exist is a false claim on someone else's PR, and a negative verdict does not make it safe.
-2. **Check the blocker is not already authorized away.** Seeding provisioning rows, fixtures or a test operator; flipping the PR's own flag; migrations — if the standing OK (§4) or an auth route (§3) covers it, that is a **step in the drive, not a blocker**. Over-classifying an authorized step as out-of-scope is the most common way this lens quits early on a change it could have verified.
-3. **Separate *blocked* from *not attempted*.** "I could not" and "I did not try" are different reports. Say which one it is.
-
-A `not verified` that survives all three is a real finding. One that does not is a lens that gave up, dressed as a result.
-
-**More than one runtime surface → one wording per surface, never a blend.** When a change spans distinct surfaces that don't share a fate — e.g. an endpoint *contract* confirmed live but the *core flow* unreachable without credentials — report **each surface with its own canonical wording**: `confirmed ✓ (contract) · not verified (core flow — no creds)`. There is **no `partially confirmed`** — the three wordings compose per surface; a blended wording hides which half is real.
-
-**NEVER UPGRADE THE WORDING.** Without a proof block, `confirmed ✓` is unavailable — the only truthful postings are `diverged` or `not verified`. Before reporting, audit the claim against its evidence; where evidence is missing, downgrade to the weaker true claim. An honest gap is actionable; an overstated ✓ is a false green light on a real change — strictly worse than a `not verified`. **But `not verified` is not a free pass.** A fabricated blocker is a false claim too, and it does extra damage: it buries a change that was verifiable and tells the author something untrue about their own environment. Downgrade the **verdict** when evidence is thin — never the **rigour of the reason**.
+**One row per runtime surface, never a blend.** There is **no `partially confirmed`**: a change spanning an
+endpoint *contract* and a *core flow* that don't share a fate reports both —
+`confirmed ✓ (contract) · not verified (core flow — no creds)`.
 
 **Bottom line.** Close the report with one tagged status line — the single line a reader or an orchestrator folds first: `[verify] confirmed ✓ — <url>` / `[verify] diverged — <url>` / `[verify] not verified — <why>`. When the surface splits, compose the canonical wordings per surface on the one line: `[verify] confirmed ✓ (contract) · not verified (core flow — no creds)`.
 
-**Done when:** the report carries exactly one of the three wordings; a `confirmed ✓` is accompanied by its proof block containing a running-app hostname **and evidence the change's own path ran**; any `static-only` header from step 2 is present; and the report ends with the `[verify]` bottom-line status.
+**Done when:** the report carries exactly one row per surface; a `confirmed ✓` carries its proof block; any `static-only` header from step 2 is present; and the report ends with the `[verify]` bottom-line.
 
 ## When nothing fits
 - **No runtime surface** → docs/config/test-only diff → `no runtime surface`, stop before detecting an app (step 1).
