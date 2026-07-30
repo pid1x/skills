@@ -83,22 +83,37 @@ it must be visible rather than silent:
 that was refused and the consequence of it.
 
 ## 1. Reset stale markers — before the poll
-The marker label means exactly: *in a review status **and** assigned to the reviewer **and** already fully
-reviewed.* **Reset it the moment any of those breaks** — a status transition **or** a re-assignment:
+The marker means: *this change was already fully reviewed by an agent pass.* It goes stale when the ticket
+**leaves the review lane** — the change came back for rework, so the next pass should see it fresh:
 
 ```
-labels = "<marker.label>" AND (status not in (<reviewStatuses>) OR assignee != <assignTo> OR assignee IS EMPTY)
+labels = "<marker.label>" AND status not in (<reviewStatuses>)
 ```
 
-**(LIVE only — in dry-run, list the tickets instead.)** Remove the label from every match (targeted remove — never overwrite the label list). A ticket handed back
-to a developer went back for rework, so the marker must clear and let it re-enter the queue cleanly.
+**(LIVE only — in dry-run, list the tickets instead.)** Remove the label from every match (targeted remove —
+never overwrite the label list; other automation writes labels on these tickets too).
 
-**Compare against `assignTo`, not the querying account.** They are often different (a routine may run under one
-identity and assign to another); using the runner's identity here makes §1 strip the very label §4 just set —
-label churn on every pass. The condition above is the *semantics*; the JQL is one tracker's spelling of it —
-express it in whatever query language `tracker` uses.
+**NEVER REMOVE A MARKER YOU CANNOT PROVE YOU SET.** `marker.label` is **one shared name in a shared tracker**,
+and you are almost certainly not its only writer: a colleague running this same skill has their own `assignTo`
+and marks the *same* label on the *same* project. So a ticket's **assignee is not evidence of ownership** —
+"not assigned to *my* `assignTo`" reads identically for *I marked it and it went back to a developer* and for
+*another queue marked it and owns it*. Reset on that condition and every queue collects every other queue's
+markers, in both directions, forever.
 
-**Done when:** no ticket outside the review statuses (or off the reviewer's name) still carries the marker — or, if the remove was refused, the affected keys are recorded for the brief (see *When the tracker refuses writes*). A marker that cannot be cleared keeps that ticket **out of the queue**, so it must be named, not shrugged off.
+That is why the predicate above tests **status only**. A ticket another pass is holding sits **in** a review
+status, so it is never touched.
+
+**The deliberate gap: a re-assignment with no status change is NOT reset.** A ticket handed to someone else
+while still in the review lane keeps its marker and therefore **stays out of the queue** until a human clears
+the label by hand. That is the cheap direction to fail in. A marker held too long costs queue latency; a marker
+wrongly removed sends an already-reviewed change back through §3 — and if commits landed since, §3 treats it
+as a delta and **posts a second review on someone else's PR**, the one write §0a exists to prevent. When the
+ownership of a marker is unclear, leave it alone and name it in the brief.
+
+The condition above is the *semantics*; the JQL is one tracker's spelling of it — express it in whatever query
+language `tracker` uses.
+
+**Done when:** no ticket outside the review statuses still carries the marker — or, if the remove was refused, the affected keys are recorded for the brief (see *When the tracker refuses writes*). A marker that cannot be cleared keeps that ticket **out of the queue**, so it must be named, not shrugged off.
 
 ## 2. Load the queue, oldest first
 Run `queue` from the config, excluding the marker. Nothing matched → **end quietly**, no notification.

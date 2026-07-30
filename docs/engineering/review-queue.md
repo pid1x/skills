@@ -8,9 +8,10 @@ Built for a scheduled task running a few times a day.
 
 ## What it does in one pass
 
-1. **Reset stale markers** — the done-marker label means *in a review status **and** assigned to the reviewer
-   **and** fully reviewed*; the moment any of those breaks (status moved, ticket handed back to a developer)
-   the label is cleared so the ticket can re-enter cleanly.
+1. **Reset stale markers** — the done-marker label means *this change was already fully reviewed*; once the
+   ticket leaves the review lane the label is cleared so it can re-enter cleanly. It resets on **status
+   only**: the label is a shared name that other people's queues write too, so a ticket's assignee is never
+   treated as proof of ownership, and a marker this queue cannot prove it set is left alone.
 2. **Load the queue, oldest first**, and pick **exactly one** ticket. Never a batch loop.
 3. **Resolve its PR** — skip your own PRs silently, notify once a day about a review-status ticket that has no
    PR at all, and skip a change already carrying this engine's review header *unless* new commits followed
