@@ -47,6 +47,16 @@ Two passes over the collected lens outputs, both mandatory:
 **Done when:** cross-lens corroborations and contradictions are named; every posted claim is backed by this-run evidence or downgraded; all five lenses have an explicit status.
 
 ## 5. Compose — delta-first
+**On a re-review, FIRST check whether you may post at all — before composing a word.** Compare this head SHA
+against the prior `🤖 deep-review` post's. **Same SHA**, and this run reaches the **same verdict**, and it
+carries **no finding the prior review didn't already have** → **do not post.** Say the prior review still
+stands, and stop. This gate also exists at delivery (§6), but by then the text is written, and "don't post"
+starts to read as discarding work — so it belongs here, ahead of the writing.
+
+**"I now have better evidence" is NOT a trigger.** Proving a standing finding harder is not a new round; it is
+the previous round restated at length. If the original finding was under-evidenced, that was a fault in the
+original — and the remedy is a short reply in its existing thread, not a fresh review.
+
 **A re-review is a DELTA, not a re-issue.** The PR is the journal — never re-write it. A closed finding was
 already explained in the round that found it, and that text is still on the page one scroll up; restating it
 spends the whole budget telling the author what they already did.
@@ -95,7 +105,13 @@ per-comment cap still land twice the text on the author.
 | An `FYI` / informational item | **one line** |
 | The closed-findings recap | **one line, for all of them together** |
 
-If it is longer, **cut — never append.** What to cut, in this order; all of it is process, not finding:
+**Measure the round before posting, and if it is over, COMPRESS — never drop a finding, and never grant
+yourself an exception.** *"Cut, or lose a real finding"* is a false choice, and it is the excuse behind every
+overrun: a 3,400-character finding compresses to 400 without losing its claim, its `file:line` or its
+consequence. Compress, measure again, then post — an overrun you noticed and shipped anyway is a decision, not
+an accident.
+
+What to cut, in this order; all of it is process, not finding:
 
 - **Closed findings, beyond the one-line key.** The most expensive habit by far and the first thing to go.
 - **🟢 "this is correct" entries — never post one.** Reassurance is not a finding. A 🟢 carrying a nit becomes an **ask**; a 🟢 carrying nothing is deleted. A claim that needed checking and checked out is one clause of the verdict, or it is already what the lens bottom-line says.
@@ -123,9 +139,14 @@ ran 1,111–2,125.)_
 - The **runtime follow-up** ([mutation]/[verify], with proof blocks) goes up as a **separate** PR comment — `gh pr comment <pr> --body-file <file>` (again by file), because it finishes after the static pass, the same reason the loop splits the two.
 - **Comment-only, always.** Never `event=APPROVE` or `REQUEST_CHANGES`, never merge. Severity is deep-review's own call — a confirmed correctness or data-integrity regression is `blocking concern` regardless of author framing — but the merge verdict stays with the human.
 
+**Settle the findings BEFORE posting — never post an addendum essay.** A review is one main comment plus its
+runtime follow-up; a third post correcting the first ("I understated the scope") means the round shipped before
+its own severities were settled. Fix the severity and the scope while the text is still a draft. If something
+genuinely has to be corrected after the fact, it is **one line** in the existing thread, never a new section.
+
 **Verify the post landed.** After sending, re-read the review/comment on the PR and confirm the body is **non-empty and complete** — a silent empty (`~`) post is worse than no post, and nobody sees it fail. If the body is empty or truncated, the send failed: re-post from the file, or report the failure plainly; never leave an empty review standing.
 
-**Delta re-review** (a prior own `🤖 deep-review` review already on the PR — match on the `🤖 deep-review` tag, **not** a bare `🤖 skill-review`, so another engine's review on the same PR is never mistaken for your own and "corrected"): dedupe on it. Re-post when **either** there are new commits since it **or** this run's verdict differs from the prior review's. **No new commits *and* the same verdict** → don't re-post; say the prior review still stands. When re-posting a delta: per prior finding `addressed ✓` / `still open`, plus new issues; never re-raise a resolved or acknowledged thread. **A verdict change with no new commits is a correction, not a duplicate** — the author is otherwise sitting on a stale verdict (e.g. still reads `blocking` after the blocker was withdrawn); the no-new-commits rule does not cover it, so post it.
+**Delta re-review** (a prior own `🤖 deep-review` review already on the PR — match on the `🤖 deep-review` tag, **not** a bare `🤖 skill-review`, so another engine's review on the same PR is never mistaken for your own and "corrected"): dedupe on it. Re-post when **either** there are new commits since it **or** this run's verdict differs from the prior review's. **No new commits *and* the same verdict** → don't re-post; say the prior review still stands — and **"I now have better evidence" is not a third trigger** (see §5's gate: extra proof for a standing finding is a reply in its thread, never a fresh review). When re-posting a delta: per prior finding `addressed ✓` / `still open`, plus new issues; never re-raise a resolved or acknowledged thread. **A verdict change with no new commits is a correction, not a duplicate** — the author is otherwise sitting on a stale verdict (e.g. still reads `blocking` after the blocker was withdrawn); the no-new-commits rule does not cover it, so post it.
 
 **Own PR:** GitHub blocks a review on your own PR — fall back to a single plain `gh pr comment` carrying the write-up, or report to chat if even that isn't wanted.
 
