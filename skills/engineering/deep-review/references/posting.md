@@ -20,8 +20,20 @@ gh api repos/{owner}/{repo}/pulls/{n}/reviews --input <payload.json>
 The body is led by the `🤖 deep-review · r<N> · <lenses>` header — the dedupe key lives **inside the review**,
 not in a separate comment, because that is what a later round matches on.
 
-Findings that carry a `file:line` may be anchored as **inline review comments** where the position resolves;
-fold the rest into the summary body.
+## Anchoring findings inline
+
+`SKILL.md` §6 carries the rule (**anchor every finding with a resolvable `file:line`**); this is the mechanism.
+
+Inline comments ride in the same review payload, as a `comments` array alongside `event` and `body`:
+
+```json
+{ "event": "COMMENT", "body": "<summary body>",
+  "comments": [ { "path": "src/orders/release.ts", "line": 214, "side": "RIGHT", "body": "<the finding>" } ] }
+```
+
+`line` must fall inside the diff hunks for `path`, or the whole call is rejected — so resolve positions from
+`gh pr diff` first. For a finding on a line the PR does not touch (a pre-existing defect, a caller elsewhere),
+the position will not resolve: that one belongs in the summary body, with its `file:line` written out.
 
 ## The runtime follow-up — a separate PR comment
 

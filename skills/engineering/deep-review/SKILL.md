@@ -100,7 +100,7 @@ per-comment cap still land twice the text on the author.
 
 | | Budget |
 |---|---|
-| **A whole round** (main + runtime follow-up) | **≈2,500 characters** for a re-review · **≈4,000** for the first review, where everything is genuinely news |
+| **A whole round** (main + runtime follow-up) | **≈2,500 characters** for a re-review · **≈4,000** for the first review, where everything is genuinely news. **Inline-anchored findings don't count** — route them to the line (§6) instead of narrating them here |
 | One finding | **3 sentences / ≈400 characters**: the claim · the evidence (`file:line`) · the consequence |
 | An `FYI` / informational item | **one line** |
 | The closed-findings recap | **one line, for all of them together** |
@@ -138,6 +138,16 @@ ran 1,111–2,125.)_
 - **Pass every body by FILE, never inline.** Inline breaks shell quoting on large markdown and posts a silent **empty `~` body**.
 - **Two posts: the main COMMENT-type review, then the runtime follow-up as a separate comment.** The `🤖 deep-review · r<N> · <lenses>` header goes **inside the review body** — that is the dedupe key a later round matches on.
 - **Verify the post landed** — re-read it and confirm the body is non-empty and complete. Never leave an empty review standing.
+
+**ANCHOR EVERY FINDING THAT HAS A RESOLVABLE `file:line` AS AN INLINE REVIEW COMMENT.** Not an option — the
+default. The summary body carries only the verdict, the owner-asks, the closed-findings line, the status line,
+and findings whose position does not resolve in the diff (a pre-existing line the PR doesn't touch, a
+cross-file argument).
+
+This is also **how the budget is met**, not merely a nicety: inline, GitHub renders the surrounding code, so
+the finding needs no `file:line` prose, no quoted snippet and no orienting context — the same finding in the
+body costs 3–4× the characters for identical information. **An inline-anchored finding does not consume body
+budget.** A review whose findings all sit in the body has mis-routed them, and the wall of text is the symptom.
 
 **Mechanics** — the exact `gh` invocations, payload shape, inline-comment anchoring, the post-verification read-back and the own-PR fallback: **`references/posting.md`** (next to this file).
 
