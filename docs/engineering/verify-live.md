@@ -22,11 +22,17 @@ Type `/verify-live`, pass a branch/PR/ticket/path as an argument, or let the age
 
 Reach for it after a change that a user or caller would exercise at runtime: an endpoint, a screen, a job. Skip it for docs-, config-, or test-only diffs — there is nothing to drive.
 
+## Logging in is part of the drive
+
+An unauthenticated drive reaches a login form, not the change — so getting a session is a **step, not a blocker**, while the credential stays with the human or the environment and never with the agent. It works down four routes and stops at the first that lands: reuse an authenticated state that already exists (saved `storageState`, cookie jar, live browser session) → let the project's own e2e fixture or login helper log in, consuming its secret from an env var the agent names but never reads → **ask the user to type the password** in the automated browser and resume from the authenticated page → or drive an unauthenticated surface and report it per-surface.
+
+Four things it will never do, even when handed the secret or told to: type or paste a password, mint or forge a session (`Auth::login` scripts, hand-written `sessions` rows, self-signed cookies), read or reset credential columns, or create an account to log in as. A refused credential operation is an answer, not something to split into smaller calls. And in an interactive session it **offers the password handoff before concluding** — reporting `not verified — needs credentials` while a human is sitting there, never having asked, is quitting one question early.
+
 ## The evidence gate
 
 The leading idea is the **evidence gate**: a claim of success must carry evidence only the real drive could produce. `confirmed ✓` is postable only with a proof block from that run — the live URL(s) driven, the driver used, and the observed artifact.
 
-**Litmus:** if the evidence contains no running-app hostname, it was not verify — it cannot be `confirmed`. Test-runner output is never verify evidence. **Second litmus:** if the change's own code path did not execute — because the fix sits behind an off feature flag, a config gate, or missing provisioning, so the app ran the *old* path — it is `not verified — <fix's path gated off>`, never `confirmed`; driving the flow is necessary but not sufficient. The wording is never upgraded: without a proof block, the only truthful postings are `diverged` or `not verified`. An honest gap is actionable; an overstated ✓ is a false green light.
+**Litmus:** if the evidence contains no running-app hostname, it was not verify — it cannot be `confirmed`. Test-runner output is never verify evidence. **Second litmus:** if the change's own code path did not execute — because the fix sits behind an off feature flag, a config gate, or missing provisioning, so the app ran the *old* path — it is `not verified — <fix's path gated off>`, never `confirmed`; driving the flow is necessary but not sufficient. **Third litmus:** a `not verified` *reason* is a published claim about the author's environment, so it is gated too — the blocker must be **observed** (the command and what it returned), not recalled from another branch or session; a blocker the standing OK already covers is a step in the drive, not a blocker; and *blocked* is reported distinctly from *not attempted*. The wording is never upgraded: without a proof block, the only truthful postings are `diverged` or `not verified`. An honest gap is actionable and an overstated ✓ is a false green light — but `not verified` is not a free pass either: a fabricated blocker is also a false claim, and it buries a change that was verifiable.
 
 ## It's working if
 
