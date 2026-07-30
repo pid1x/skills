@@ -40,22 +40,10 @@ write as a *report*.
 All instance-specific values live in **`.review-queue.json`** at the repo root, so this skill stays
 identical across repos. Missing file → say what is needed and stop; never guess a queue query.
 
-```json
-{
-  "tracker": "jira",
-  "queue": "(assignee = currentUser() OR ((project = ABC OR labels = ABC) AND assignee IS EMPTY)) AND status in (\"Ready for review\", \"In Review\") ORDER BY created ASC",
-  "reviewStatuses": ["Ready for review", "In Review"],
-  "assignTo": "someone@example.com",
-  "marker": { "label": "agent-reviewed", "header": "🤖 deep-review" },
-  "notify": { "via": "slack-dm", "target": "@me" },
-  "vcsIdentity": "your-gh-login",
-  "isolation": { "strategy": "wts", "tool": "path to wts (vendored copy, or just `wts` on PATH)", "prefer": "review", "parkingBranch": "<name>-main" },
-  "env": { "baseUrl": "https://<worktree>.test", "repair": ["project-specific recovery steps"], "generatedArtifacts": ["paths a real flow may regenerate — revertable on restore"] },
-  "envMutation": { "authorized": ["feature flags", "provisioning rows", "migrations", "deps"], "forbidden": ["credentials", "shared config"] },
-  "reviewRules": ["repo review-convention files to pass to the engine lens, e.g. .github/instructions/*.instructions.md"],
-  "workHours": "when an unattended pass may run, e.g. weekdays 08:00-18:00 Europe/Berlin"
-}
-```
+The fields this pass reads: `queue` · `reviewStatuses` · `assignTo` · `marker.{label,header}` · `notify` ·
+`vcsIdentity` · `isolation` · `env.{baseUrl,repair,generatedArtifacts}` · `envMutation.{authorized,forbidden}` ·
+`reviewRules`. **Full schema, an example, and what each field means: `references/config.md`** (next to this
+file) — read it on the first run in a repo, or whenever a field is missing or ambiguous.
 
 **Done when:** the config is loaded and the queue query, marker, notify target and isolation strategy are known.
 

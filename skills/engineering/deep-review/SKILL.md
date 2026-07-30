@@ -134,21 +134,19 @@ ran 1,111–2,125.)_
 
 **`post`:** send the review to the PR, in the automated loop's shape. **Confirm the target PR number before sending.**
 
-**Pass the body by FILE, never inline.** A review body is large markdown — backticks, `$`, quotes, code fences. Passed inline (`gh … -f body="…"` / `--body "…"`) it breaks shell quoting and posts an **empty `~` body** — a silent, content-less review. Always write the body to a temp file and pass it by reference:
-- The **main review** goes up as a GitHub **COMMENT-type review** — `gh api repos/{owner}/{repo}/pulls/{n}/reviews --input <payload.json>` (a JSON file with `"event":"COMMENT"` and the body), never `-f body="…"`. Its body is led by the `🤖 deep-review · <lenses>` header (the dedupe key, inside the review, not a separate comment). Anchor findings that carry a `file:line` as inline review comments where the position resolves; fold the rest into the summary body.
-- The **runtime follow-up** ([mutation]/[verify], with proof blocks) goes up as a **separate** PR comment — `gh pr comment <pr> --body-file <file>` (again by file), because it finishes after the static pass, the same reason the loop splits the two.
-- **Comment-only, always.** Never `event=APPROVE` or `REQUEST_CHANGES`, never merge. Severity is deep-review's own call — a confirmed correctness or data-integrity regression is `blocking concern` regardless of author framing — but the merge verdict stays with the human.
+- **Comment-only, ALWAYS.** Never `event=APPROVE` or `REQUEST_CHANGES`, never merge. Severity is deep-review's own call — a confirmed correctness or data-integrity regression is `blocking concern` regardless of author framing — but the merge verdict stays with the human.
+- **Pass every body by FILE, never inline.** Inline breaks shell quoting on large markdown and posts a silent **empty `~` body**.
+- **Two posts: the main COMMENT-type review, then the runtime follow-up as a separate comment.** The `🤖 deep-review · r<N> · <lenses>` header goes **inside the review body** — that is the dedupe key a later round matches on.
+- **Verify the post landed** — re-read it and confirm the body is non-empty and complete. Never leave an empty review standing.
+
+**Mechanics** — the exact `gh` invocations, payload shape, inline-comment anchoring, the post-verification read-back and the own-PR fallback: **`references/posting.md`** (next to this file).
 
 **Settle the findings BEFORE posting — never post an addendum essay.** A review is one main comment plus its
 runtime follow-up; a third post correcting the first ("I understated the scope") means the round shipped before
 its own severities were settled. Fix the severity and the scope while the text is still a draft. If something
 genuinely has to be corrected after the fact, it is **one line** in the existing thread, never a new section.
 
-**Verify the post landed.** After sending, re-read the review/comment on the PR and confirm the body is **non-empty and complete** — a silent empty (`~`) post is worse than no post, and nobody sees it fail. If the body is empty or truncated, the send failed: re-post from the file, or report the failure plainly; never leave an empty review standing.
-
 **Delta re-review** (a prior own `🤖 deep-review` review already on the PR — match on the `🤖 deep-review` tag, **not** a bare `🤖 skill-review`, so another engine's review on the same PR is never mistaken for your own and "corrected"): dedupe on it. Re-post when **either** there are new commits since it **or** this run's verdict differs from the prior review's. **No new commits *and* the same verdict** → don't re-post; say the prior review still stands — and **"I now have better evidence" is not a third trigger** (see §5's gate: extra proof for a standing finding is a reply in its thread, never a fresh review). When re-posting a delta: per prior finding `addressed ✓` / `still open`, plus new issues; never re-raise a resolved or acknowledged thread. **A verdict change with no new commits is a correction, not a duplicate** — the author is otherwise sitting on a stale verdict (e.g. still reads `blocking` after the blocker was withdrawn); the no-new-commits rule does not cover it, so post it.
-
-**Own PR:** GitHub blocks a review on your own PR — fall back to a single plain `gh pr comment` carrying the write-up, or report to chat if even that isn't wanted.
 
 **Done when:** dry-run → the write-up is in the chat; `post` → the COMMENT review + runtime follow-up are on the PR **with their bodies confirmed non-empty** (or the delta / own-PR / no-new-commits path is taken with its reason stated), and nothing was ever approved, requested-changes, or merged.
 
