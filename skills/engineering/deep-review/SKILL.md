@@ -17,14 +17,16 @@ Capability map, cached in `.deep-review.json` (git-ignored like the lenses' own 
 | [spec] | a tracker reachable, or a PR / pasted spec? | `[spec] no spec to check against` |
 | [security] | always (static) | — |
 | [mutation] | `mutation-check` reachable + a mutation tool detected? | `[mutation] no result — no tool` + one-line install hint |
-| [verify] | app runnable (a `.verify-live.json` or a recognisable dev server)? | `[verify] not verified — app not runnable` + a `⚠️ static-only` header on the review |
+| [verify] | app runnable (a `.verify-live.json` or a recognisable dev server) — and a session route (saved state / a project login seam), checked in §2? | `[verify] not verified — app not runnable` + a `⚠️ static-only` header on the review |
 
 **Done when:** the changed files are listed; each of the five lenses is marked runnable or degraded-with-reason; `.deep-review.json` is written or read and `git check-ignore` passes.
 
 ## 2. Checkout policy — never write source
 The conservative rule the lenses share: **dirty tree** → review from the diff, don't check out; **clean tree** → check out the PR head, restore the original branch afterwards. A review **never writes source files** — with exactly one sanctioned exception: `mutation-check`'s hand-applied fallback makes **transient** edits to already-checked-out source, each reverted unconditionally (including when its watchdog aborts mid-mutant) with the tree verified clean afterwards; see that skill's revert guarantee. Nothing else writes source. Runtime lenses ([mutation]/[verify]) need the app stood up; static lenses (engine/[spec]/[security]) don't.
 
-**Done when:** the change is present to review (checked-out head or working diff), and the runtime lenses have a stood-up app or a recorded reason they don't.
+**Standing up includes the session.** Most real flows need an authenticated session, so obtain it here, once, and let both runtime lenses share it — worked in exactly the order verify-live §3 sanctions: reuse a saved state → **invoke the project's login seam** (a registered `verify` skill or a login helper that consumes its credential from the environment — you pass the seam a URL, never a secret value) → interactive hand-over. The seam is what makes the runtime lenses work unattended; a seam that exists but was never invoked turns the later `not verified — no session` into a dressed-up non-run, not a missing capability. Record the seam's *kind* (not its credentials) in `.deep-review.json` so later runs go straight to it.
+
+**Done when:** the change is present to review (checked-out head or working diff), and the runtime lenses have a stood-up app **and a session** — or a recorded reason for whichever is missing.
 
 ## 3. Run the five lenses
 Invoke each runnable lens — **do not restate its rules, the lens owns them:**
