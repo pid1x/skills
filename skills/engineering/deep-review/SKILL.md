@@ -48,74 +48,117 @@ Two passes over the collected lens outputs, both mandatory:
 
 **Done when:** cross-lens corroborations and contradictions are named; every posted claim is backed by this-run evidence or downgraded; all five lenses have an explicit status.
 
-## 5. Compose — the loop-style write-up
-Write the review in the shape a PR already expects, so it reads the same whoever produced it. **Two comments, never blurred:**
+## 5. Compose — delta-first
+**On a re-review, FIRST check whether you may post at all — before composing a word.** Compare this head SHA
+against the prior `🤖 deep-review` post's. **Same SHA**, and this run reaches the **same verdict**, and it
+carries **no finding the prior review didn't already have** → **do not post.** Say the prior review still
+stands, and stop. This gate also exists at delivery (§6), but by then the text is written, and "don't post"
+starts to read as discarding work — so it belongs here, ahead of the writing.
 
-**Main review comment** — led by the header `🤖 deep-review · <lenses that ran>` (the same two-comment shape the automated review loop posts; the `🤖 deep-review` tag names this engine distinctly so a reader can tell it from a loop review, and so the dedupe below matches only its **own** prior posts, never another engine's), then:
-- **My read:** `approvable` / `minor changes` / `blocking concern` — deep-review's own call, folding the lens severities.
-- **Prior findings** (delta re-review only) — per prior finding, `addressed ✓` / `still open`; never re-raise a resolved thread.
-- **Engine review** — the general findings, numbered.
-- **[security]** and **[spec]** — folded in with their inline tags and bottom-lines.
-- **`## Asks` — last, and never omitted** (see below).
+**"I now have better evidence" is NOT a trigger.** Proving a standing finding harder is not a new round; it is
+the previous round restated at length. If the original finding was under-evidenced, that was a fault in the
+original — and the remedy is a short reply in its existing thread, not a fresh review.
 
-**Runtime follow-up comment** — `[mutation]` and `[verify]` with their proof blocks (they finish later than the static pass, so they can't fold into the main comment). It ends in its own short `Asks` block whenever a runtime lens produced one.
+**A re-review is a DELTA, not a re-issue.** The PR is the journal — never re-write it. A closed finding was
+already explained in the round that found it, and that text is still on the page one scroll up; restating it
+spends the whole budget telling the author what they already did.
 
-Each lens keeps its `[lens]` bottom-line. If [verify] couldn't run, the `⚠️ static-only — not runtime-verified` header rides on the main comment.
+**Main review comment**, in this order — only step 3 gets body text:
 
-### End on the asks, not on a tally
+1. **Header** — `🤖 deep-review · r<N> · <lenses that ran>`. The tag is **FIXED — never rename it between rounds.** The dedupe matches on this exact string, so a renamed header stops it recognising its own prior posts and the next round re-issues a full review instead of a delta (and a reader can no longer tell one engine's thread from another's).
+2. **Verdict** — `approvable` / `minor changes` / `blocking concern`, plus **one clause** of why. Not a paragraph.
+3. **Open** — each finding still live, with its severity and its `→ ask:` on the following line.
+4. **Not the author** — asks owned by someone else (file the follow-up, a SEC ticket, a product decision), one line each, owner named.
+5. **Closed since r\<N-1>** — **one line, keys and ticks only**: `1 release guard ✓ · 2 reachability ✓ · 5 mutation survivors ✓ · 3–4 declined, still correct`. No table, no `file:line`, no re-explanation.
+6. **Lens status line** — the `[lens]` bottom-lines folded onto one trailing line.
+
+**Runtime follow-up comment** — `[mutation]` and `[verify]` land later than the static pass, so they cannot
+fold into the main comment. It carries **only its own findings and proof block**: what the drive showed, the
+URL, the survivor list. It is not a second review — no verdict restatement, no prior-findings recap.
+
+If [verify] couldn't run, the `⚠️ static-only — not runtime-verified` header rides on the main comment.
+
+### Every finding carries its ask
 A review that never approves and never blocks has exactly one lever: **how clearly it asks.** Findings are
-diagnoses; an author needs the translation into work. So **every finding carries its ask on one line**
-(`→ ask: <verb the author can act on>`), and the comment **closes with a consolidated `## Asks` block** —
-grouped, ordered, each item naming a **verb** and, where it isn't the author, an **owner**:
+diagnoses; an author needs the translation into work. So **every open finding carries its ask on the following
+line** (`→ ask: <verb the author can act on>`), and asks that are **not the author's** get their own short
+block with the owner named.
 
-- **Must** — correctness, data integrity, security with a reachable path. Name the file:line to change.
-- **Should** — worth doing now, not release-blocking (a test that doesn't actually pin the bug, a misleading message).
-- **Decide** — *not* a code change: a judgement only a human can make. Say who and what: confirm a requirement counts as closed, accept-or-split disclosed scope creep, file the follow-up ticket that nothing currently links.
-- **FYI** — deliberately no action (unreachable sinks, pre-existing patterns), so the author knows they may skip it.
+Severity still sets the register — **Must** (correctness, data integrity, a reachable security path; name the
+`file:line` to change) · **Should** (worth doing now, not release-blocking) · **Decide** (no code change: a
+judgement only a human can make, and never signed off by the author alone) · **FYI** (deliberately no action —
+unreachable sinks, pre-existing patterns — one line, so the author knows they may skip it).
 
-Empty groups are dropped; an all-clear review says `## Asks — none` rather than nothing. **Never close on a
-count** (`1 finding · 2 informational`) — a statistic is the worst possible last line, because it leaves the
-reader to derive the work. The lens bottom-lines stay where they are, inside their sections.
+The consolidated trailing `## Asks` block is **gone**: with each ask inline and the owner-asks in their own
+block, re-listing them at the end was the same work stated twice, and it was the single largest duplicated
+section. The **lens status line may now be last** precisely because every ask already appears above it — a
+trailing statistic is acceptable only when the reader has nothing left to derive from it. An all-clear review
+still says so in words (`approvable — nothing open`), never by falling silent.
 
 ### Keep it short enough to be read
-Length is not thoroughness. A wall of text gets skimmed, and a skimmed review changes nothing — so the
-budget is part of the format, not a nicety. Measured caps for the **main comment**:
+Length is not thoroughness. A wall of text gets skimmed, and a skimmed review changes nothing — so the budget
+is part of the format, not a nicety. **Budget the ROUND, not the comment:** two comments that each pass a
+per-comment cap still land twice the text on the author.
 
 | | Budget |
 |---|---|
-| Whole main comment | **≈3,500 characters** — if it is longer, cut, don't append |
+| **A whole round** (main + runtime follow-up) | **≈2,500 characters** for a re-review · **≈4,000** for the first review, where everything is genuinely news. **Inline-anchored findings don't count** — route them to the line (§6) instead of narrating them here |
 | One finding | **3 sentences / ≈400 characters**: the claim · the evidence (`file:line`) · the consequence |
 | An `FYI` / informational item | **one line** |
-| The `Asks` block | one line per ask |
+| The closed-findings recap | **one line, for all of them together** |
 
-What to cut first, in order — all of it is process, not finding:
-- **How you found it.** The `file:line` *is* the evidence; the trace that led there is not. Never narrate
-  the investigation ("I then checked X, which showed Y, so I looked at Z").
-- **Restating the author's own words.** Do not quote the PR description or re-explain the ticket back to
-  them — they wrote it. Quote a spec line only where the divergence turns on its exact wording.
+**Measure the round before posting, and if it is over, COMPRESS — never drop a finding, and never grant
+yourself an exception.** *"Cut, or lose a real finding"* is a false choice, and it is the excuse behind every
+overrun: a 3,400-character finding compresses to 400 without losing its claim, its `file:line` or its
+consequence. Compress, measure again, then post — an overrun you noticed and shipped anyway is a decision, not
+an accident.
+
+What to cut, in this order; all of it is process, not finding:
+
+- **Closed findings, beyond the one-line key.** The most expensive habit by far and the first thing to go.
+- **🟢 "this is correct" entries — never post one.** Reassurance is not a finding. A 🟢 carrying a nit becomes an **ask**; a 🟢 carrying nothing is deleted. A claim that needed checking and checked out is one clause of the verdict, or it is already what the lens bottom-line says.
+- **The same problem described more than once.** One finding, one description. A blocker does not need a paragraph in the verdict *and* a numbered finding *and* a `[spec]` bullet *and* an ask — it needs the finding and its ask.
+- **Per-lens sections with no finding in them.** `### [security] — no new risk surface` followed by three clearance bullets is the lens proving it ran; the status line already does that. A lens earns body text only when it has a finding.
+- **How you found it.** The `file:line` *is* the evidence; the trace that led there is not. Never narrate the investigation ("I then checked X, which showed Y, so I looked at Z").
+- **Restating the author's own words.** Do not quote the PR description or re-explain the ticket back to them — they wrote it. Quote a spec line only where the divergence turns on its exact wording.
 - **Re-deriving what the change obviously does.** Findings are about what is *wrong or missing*.
-- **Confirmations.** "I verified claim X holds" belongs in one clause of the verdict, not its own paragraph.
 
-_(Reference point: an early live review ran 8,482 characters, 46 % of it in the engine section with single
-findings up to 1,383 — roughly 200 words for one point. Same findings, a third of the text.)_
+_(Reference point, measured on one real PR: six rounds ran **~45,200 characters** across 11 comments — round 6
+alone was 10,240 (4,942 static + 5,298 runtime), against a then-budget of 3,500 for the main comment that every
+round overran while the follow-up went unbudgeted. The same round in delta shape is ~1,150 with nothing
+actionable lost. For scale, the human reviewer on that PR approved in 243 characters, and the author's replies
+ran 1,111–2,125.)_
 
-**Done when:** the write-up carries both comments in loop shape; every lens's bottom-line is present; the `My read` verdict leads the main comment; **every finding has a one-line ask, and the comment ends with the `## Asks` block** (or `## Asks — none`).
+**Done when:** the main comment carries the fixed header, the one-clause verdict, the open findings, the owner-asks, the one-line closed recap and the trailing lens status line, in that order; every lens's bottom-line is present; **every open finding has its `→ ask:`**; no 🟢 entry and no findingless lens section was posted; and the round is inside its character budget — measured across **both** comments, not each.
 
 ## 6. Deliver — dry-run by default, `post` writes to the PR
 **Dry-run (default, no `post` argument):** report the composed write-up into the chat, PR-ready. Nothing is sent. This is the safe default — posting is outward-facing and hard to undo.
 
 **`post`:** send the review to the PR, in the automated loop's shape. **Confirm the target PR number before sending.**
 
-**Pass the body by FILE, never inline.** A review body is large markdown — backticks, `$`, quotes, code fences. Passed inline (`gh … -f body="…"` / `--body "…"`) it breaks shell quoting and posts an **empty `~` body** — a silent, content-less review. Always write the body to a temp file and pass it by reference:
-- The **main review** goes up as a GitHub **COMMENT-type review** — `gh api repos/{owner}/{repo}/pulls/{n}/reviews --input <payload.json>` (a JSON file with `"event":"COMMENT"` and the body), never `-f body="…"`. Its body is led by the `🤖 deep-review · <lenses>` header (the dedupe key, inside the review, not a separate comment). Anchor findings that carry a `file:line` as inline review comments where the position resolves; fold the rest into the summary body.
-- The **runtime follow-up** ([mutation]/[verify], with proof blocks) goes up as a **separate** PR comment — `gh pr comment <pr> --body-file <file>` (again by file), because it finishes after the static pass, the same reason the loop splits the two.
-- **Comment-only, always.** Never `event=APPROVE` or `REQUEST_CHANGES`, never merge. Severity is deep-review's own call — a confirmed correctness or data-integrity regression is `blocking concern` regardless of author framing — but the merge verdict stays with the human.
+- **Comment-only, ALWAYS.** Never `event=APPROVE` or `REQUEST_CHANGES`, never merge. Severity is deep-review's own call — a confirmed correctness or data-integrity regression is `blocking concern` regardless of author framing — but the merge verdict stays with the human.
+- **Pass every body by FILE, never inline.** Inline breaks shell quoting on large markdown and posts a silent **empty `~` body**.
+- **Two posts: the main COMMENT-type review, then the runtime follow-up as a separate comment.** The `🤖 deep-review · r<N> · <lenses>` header goes **inside the review body** — that is the dedupe key a later round matches on.
+- **Verify the post landed** — re-read it and confirm the body is non-empty and complete. Never leave an empty review standing.
 
-**Verify the post landed.** After sending, re-read the review/comment on the PR and confirm the body is **non-empty and complete** — a silent empty (`~`) post is worse than no post, and nobody sees it fail. If the body is empty or truncated, the send failed: re-post from the file, or report the failure plainly; never leave an empty review standing.
+**ANCHOR EVERY FINDING THAT HAS A RESOLVABLE `file:line` AS AN INLINE REVIEW COMMENT.** Not an option — the
+default. The summary body carries only the verdict, the owner-asks, the closed-findings line, the status line,
+and findings whose position does not resolve in the diff (a pre-existing line the PR doesn't touch, a
+cross-file argument).
 
-**Delta re-review** (a prior own `🤖 deep-review` review already on the PR — match on the `🤖 deep-review` tag, **not** a bare `🤖 skill-review`, so another engine's review on the same PR is never mistaken for your own and "corrected"): dedupe on it. Re-post when **either** there are new commits since it **or** this run's verdict differs from the prior review's. **No new commits *and* the same verdict** → don't re-post; say the prior review still stands. When re-posting a delta: per prior finding `addressed ✓` / `still open`, plus new issues; never re-raise a resolved or acknowledged thread. **A verdict change with no new commits is a correction, not a duplicate** — the author is otherwise sitting on a stale verdict (e.g. still reads `blocking` after the blocker was withdrawn); the no-new-commits rule does not cover it, so post it.
+This is also **how the budget is met**, not merely a nicety: inline, GitHub renders the surrounding code, so
+the finding needs no `file:line` prose, no quoted snippet and no orienting context — the same finding in the
+body costs 3–4× the characters for identical information. **An inline-anchored finding does not consume body
+budget.** A review whose findings all sit in the body has mis-routed them, and the wall of text is the symptom.
 
-**Own PR:** GitHub blocks a review on your own PR — fall back to a single plain `gh pr comment` carrying the write-up, or report to chat if even that isn't wanted.
+**Mechanics** — the exact `gh` invocations, payload shape, inline-comment anchoring, the post-verification read-back and the own-PR fallback: **`references/posting.md`** (next to this file).
+
+**Settle the findings BEFORE posting — never post an addendum essay.** A review is one main comment plus its
+runtime follow-up; a third post correcting the first ("I understated the scope") means the round shipped before
+its own severities were settled. Fix the severity and the scope while the text is still a draft. If something
+genuinely has to be corrected after the fact, it is **one line** in the existing thread, never a new section.
+
+**Delta re-review** (a prior own `🤖 deep-review` review already on the PR — match on the `🤖 deep-review` tag, **not** a bare `🤖 skill-review`, so another engine's review on the same PR is never mistaken for your own and "corrected"): dedupe on it. Re-post when **either** there are new commits since it **or** this run's verdict differs from the prior review's. **No new commits *and* the same verdict** → don't re-post; say the prior review still stands — and **"I now have better evidence" is not a third trigger** (see §5's gate: extra proof for a standing finding is a reply in its thread, never a fresh review). When re-posting a delta: per prior finding `addressed ✓` / `still open`, plus new issues; never re-raise a resolved or acknowledged thread. **A verdict change with no new commits is a correction, not a duplicate** — the author is otherwise sitting on a stale verdict (e.g. still reads `blocking` after the blocker was withdrawn); the no-new-commits rule does not cover it, so post it.
 
 **Done when:** dry-run → the write-up is in the chat; `post` → the COMMENT review + runtime follow-up are on the PR **with their bodies confirmed non-empty** (or the delta / own-PR / no-new-commits path is taken with its reason stated), and nothing was ever approved, requested-changes, or merged.
 

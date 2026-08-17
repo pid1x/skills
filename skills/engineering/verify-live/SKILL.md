@@ -31,16 +31,37 @@ Detect and record how to reach the app:
 
 - **`baseUrl`** — a running-app hostname (recognisable dev server, `.test` host, container port).
 - **`start`** — the command that brings it up, if it is not already running.
-- **`auth`** — a **pointer** to how a request authenticates: the env var name, the secret-manager key, or the login route plus which local dev account to use. **Never the secret itself** — no tokens, passwords, cookies or PATs in this file. It is a convenience cache, not a credential store; it sits untracked on disk, so a leaked cache would be a leaked credential. If a drive needs a real secret, read it from the environment at run time.
+- **`auth`** — a **pointer** to how a request authenticates: the env var name, the secret-manager key, or the login route plus which local dev account to use — consumed by step 3. **Never the secret itself** — no tokens, passwords, cookies or PATs in this file. It is a convenience cache, not a credential store; it sits untracked on disk, so a leaked cache would be a leaked credential. If a drive needs a real secret, read it from the environment at run time.
 
 If the app **cannot be made to run** — no dev server, no runnable target — the drive cannot happen. That is not a skip and not a `confirmed`: report `not verified — app not runnable` and mark the review with a **`⚠️ static-only — not runtime-verified`** header, so no reader mistakes a static pass for a runtime one.
 
 **Done when:** the app responds at `baseUrl` (or a registered `verify` skill owns the drive); `.verify-live.json` is written or read; and `git check-ignore .verify-live.json` passes. If the app is not runnable, the `static-only` header is set and the run continues to report `not verified`.
 
-## 3. Drive the actual flow
+## 3. Get an authenticated session — most real flows need one
+An unauthenticated drive reaches a **login form, not the change**. Authentication is therefore **part of the drive, not a blocker to report** — but the credential is always held by the human or the environment, **never by you**. Work down this order and stop at the first that works:
+
+1. **Reuse an authenticated state that already exists.** A saved browser `storageState`, a cookie jar from an earlier drive, a session still live in the automated browser. Free when present — always look first.
+2. **Let the project's own harness log in.** An e2e fixture, a login helper, or a seeded-session command already encodes the real login (e.g. a `performLogin` helper that reads its password from an env var). Invoke it and let **it** consume the secret: you pass a **variable name**, never a value. This is the route that works unattended.
+3. **Hand the keyboard to the user (interactive only).** Open the login page in the automated browser, fill only the non-secret fields (the username), then **ask the user to type the password and confirm**, and resume from the authenticated page. They keep the secret; you never see it.
+4. **Drive an unauthenticated surface instead**, where the change has one — a public route, or an endpoint whose token comes from a sanctioned mint. Report it **per surface** (step 5) so no reader thinks the authenticated flow was covered.
+
+**NEVER obtain a session any other way.** These are refusals, not obstacles to be worked around, and they hold even when the user supplies the secret or authorizes it outright:
+
+- **never type or paste a password** into a login field — including one the user pasted into the chat;
+- **never mint or forge a session** — no `Auth::login` script, no hand-written `sessions` row, no self-signed cookie;
+- **never read, reset or migrate password / credential columns**;
+- **never create an account** to authenticate as.
+
+And **never split a refused call into smaller steps to slip it past a guard** — a blocked credential operation is an answer, not a puzzle.
+
+**In an interactive session, OFFER route 3 before you conclude.** Reporting `not verified — needs credentials` while a human is sitting right there, having never asked them to log in, is the lens quitting one question early. Ask, then drive.
+
+**Done when:** the drive holds an authenticated session via one of routes 1–4 — or, after routes 1, 2 and (if interactive) 3 were genuinely attempted, `not verified — no authenticated session available (<what was tried>)`, which step 5's third litmus accepts as a demonstrated blocker.
+
+## 4. Drive the actual flow
 Exercise the flow from step 1 against the running app: hit the endpoint with an authenticated HTTP client, or drive the UI with browser automation. Observe the **real** result — the response body, the rendered output, or the persisted state read back after the action.
 
-**Running the test suite is NOT this.** A green suite never substitutes for driving the flow. Integration tests through the framework's HTTP kernel are still the test suite — they do not touch the running app. If the only thing you can run is tests, the flow was **not driven**: fix the drive (start the app, find the route, get auth), then drive it.
+**Running the test suite is NOT this.** A green suite never substitutes for driving the flow. Integration tests through the framework's HTTP kernel are still the test suite — they do not touch the running app. If the only thing you can run is tests, the flow was **not driven**: fix the drive (start the app, find the route, get auth via step 3), then drive it.
 
 **Drive the change's own code path, not just the flow.** A running app can execute the flow while a **feature flag, config gate, or unprovisioned dependency routes execution *around* your change** — the old path runs, the drive looks successful, and the fix never executed. Before observing, trace that the change's path is actually reached: the flag is on, the provisioning exists, and the observed behaviour is the **new** behaviour, not a gated-off fallback. Reaching it may need flipping a flag or seeding provisioning — that is **env mutation: do it only with the user's OK, never silently** (a stub config file replaced blindly can break login or other flags).
 
@@ -50,29 +71,48 @@ The OK need not be a live prompt: a **standing, scoped authorization from the ca
 - **Dirty working tree** → do not check anything out; drive against the PR diff as applied, or note that the flow could not be reached without a checkout.
 - **Clean tree** → check out the PR head, drive, then restore the original branch afterwards.
 
-**Done when:** the affected flow was exercised against the running app, the **change's own code path was confirmed reached** (not routed around by an off flag / gate / missing provisioning), and its real response / output / persisted state was observed and captured — or the drive failed and step 4 reports the honest negative.
+**Done when:** the affected flow was exercised against the running app, the **change's own code path was confirmed reached** (not routed around by an off flag / gate / missing provisioning), and its real response / output / persisted state was observed and captured — or the drive failed and step 5 reports the honest negative.
 
-## 4. Gate the claim on evidence
-The claim you post is decided by the evidence you hold, not by how the run felt. **Exactly three wordings are allowed:**
+## 5. Gate the claim on evidence
+The wording is decided by the evidence you hold, not by how the run felt. **Match your evidence to a row —
+no wording exists outside this table:**
 
-- **`confirmed ✓`** — the flow behaves as the change intends. Postable **ONLY** with a **proof block from THIS run**: the exact live URL(s) driven, the driver used (browser automation / authenticated HTTP client), and the observed artifact (response snippet, screenshot, or record read back after the action).
-- **`diverged — <url>`** — the flow ran but behaved wrong. Name the live URL and what you saw versus expected.
-- **`not verified — <why + what was tried>`** — the flow could not be driven. State why and what you attempted.
+| Evidence you actually hold | Wording |
+|---|---|
+| Live URL driven · the change's **own** path provably ran · observed artifact (response, screenshot, record read back) | `confirmed ✓` |
+| Flow ran, behaved wrong | `diverged — <url>` |
+| Flow ran but took the **old** path — off flag, config gate, missing provisioning | `not verified — <fix's path gated off>` |
+| Not driven; blocker **observed** — the command you ran and what it returned | `not verified — <blocker>` |
+| Not driven; blocker only inferred, recalled, or never actually attempted | `not verified — drive not completed (<what was tried>)` |
 
-**LITMUS: if the evidence contains no running-app hostname, it was not verify — it cannot be `confirmed`.** PHPUnit/Pest/Jest output is never verify evidence.
+**NEVER UPGRADE A ROW.** Audit the claim against its evidence before posting and take the weaker true row
+wherever evidence is missing. An overstated ✓ is a false green light on a real change — but `not verified` is
+**not a free pass** either: a fabricated blocker is equally a false claim, and it does extra damage by burying a
+change that was verifiable. Downgrade the **verdict** when evidence is thin, never the **rigour of the reason**.
 
-**SECOND LITMUS: if the change's own code path did not execute, it was not verified.** A flow that ran the **old** path — because the fix sits behind an off feature flag, a config gate, or missing provisioning — is `not verified — <the fix's path is gated off>`, never `confirmed`. Driving the flow is necessary but not sufficient; the change's path must have actually run.
+**Three guards the table cannot carry:**
 
-**More than one runtime surface → one wording per surface, never a blend.** When a change spans distinct surfaces that don't share a fate — e.g. an endpoint *contract* confirmed live but the *core flow* unreachable without credentials — report **each surface with its own canonical wording**: `confirmed ✓ (contract) · not verified (core flow — no creds)`. There is **no `partially confirmed`** — the three wordings compose per surface; a blended wording hides which half is real.
+1. **Test-runner output is never evidence.** No running-app hostname → no `confirmed`, ever. Integration tests
+   through the framework's HTTP kernel never touched the running app.
+2. **A blocker the standing OK (§4) or an auth route (§3) already covers is a STEP, not a blocker** — seeding
+   provisioning or fixtures, flipping the PR's own flag, migrations. Over-classifying an authorized step as
+   out-of-scope is the most common way this lens quits early on a change it could have verified.
+3. **A recalled mechanism is a hypothesis.** Confirm it in the tree in front of you or do not name it — a
+   confidently-named gate that does not exist is a false claim on someone else's PR, and a negative verdict
+   does not make it safe.
 
-**NEVER UPGRADE THE WORDING.** Without a proof block, `confirmed ✓` is unavailable — the only truthful postings are `diverged` or `not verified`. Before reporting, audit the claim against its evidence; where evidence is missing, downgrade to the weaker true claim. An honest gap is actionable; an overstated ✓ is a false green light on a real change — strictly worse than a `not verified`.
+**One row per runtime surface, never a blend.** There is **no `partially confirmed`**: a change spanning an
+endpoint *contract* and a *core flow* that don't share a fate reports both —
+`confirmed ✓ (contract) · not verified (core flow — no creds)`.
 
 **Bottom line.** Close the report with one tagged status line — the single line a reader or an orchestrator folds first: `[verify] confirmed ✓ — <url>` / `[verify] diverged — <url>` / `[verify] not verified — <why>`. When the surface splits, compose the canonical wordings per surface on the one line: `[verify] confirmed ✓ (contract) · not verified (core flow — no creds)`.
 
-**Done when:** the report carries exactly one of the three wordings; a `confirmed ✓` is accompanied by its proof block containing a running-app hostname **and evidence the change's own path ran**; any `static-only` header from step 2 is present; and the report ends with the `[verify]` bottom-line status.
+**Done when:** the report carries exactly one row per surface; a `confirmed ✓` carries its proof block; any `static-only` header from step 2 is present; and the report ends with the `[verify]` bottom-line.
 
 ## When nothing fits
 - **No runtime surface** → docs/config/test-only diff → `no runtime surface`, stop before detecting an app (step 1).
 - **App not runnable** → `not verified — app not runnable` + the `⚠️ static-only` header; never `confirmed`.
 - **Only the test suite runs** → the flow was not driven → fix the drive, or report `not verified — <what blocked the drive>`. A green suite is not evidence.
-- **Change gated off** → the app runs and the flow is drivable, but the fix's path sits behind an off feature flag / config gate / missing provisioning → `not verified — <fix's path gated off>`. Reaching it needs flipping the flag or seeding provisioning — **env mutation, only with the user's OK**, never silently.
+- **Change gated off** → the app runs and the flow is drivable, but the fix's path sits behind an off feature flag / config gate / missing provisioning → `not verified — <fix's path gated off>`. Reaching it needs flipping the flag or seeding provisioning — **env mutation, only with the user's OK**, never silently. Where a live or standing OK **does** cover the flip, reaching the path is part of the drive: `not verified — gated off` is correct only when no authorization covers it.
+- **Flow needs a login** → not a blocker: work step 3's routes (reuse saved state → let the project's harness log in → ask the user to type it). Only after those are actually attempted is `not verified — no authenticated session available` true. Never type a password, forge a session, or read credential columns to get there.
+- **A blocker you cannot demonstrate** → do not name it. Either show the command and its output, or report `not verified — drive not completed (<what you actually tried>)` and let the gap read as a gap rather than as a fact about the author's setup.
